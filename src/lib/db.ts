@@ -23,48 +23,28 @@ export const db = new Proxy({} as PrismaClient, {
       return new Proxy(() => {}, {
         get() {
           return () => {
-            throw new Error("Database is not configured. Operating in in-memory mode.");
+            throw new Error(
+              "Database is not configured. Operating in in-memory mode."
+            );
           };
         },
         apply() {
-          throw new Error("Database is not configured. Operating in in-memory mode.");
-        }
+          throw new Error(
+            "Database is not configured. Operating in in-memory mode."
+          );
+        },
       });
     }
 
     if (!globalForPrisma.prisma) {
-      const databaseUrl = getEnv("DATABASE_URL");
-      const isPrismaPostgres = databaseUrl?.startsWith("prisma+postgres://");
-
-      if (isPrismaPostgres) {
-        globalForPrisma.prisma = new PrismaClient({
-          log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-          accelerateUrl: databaseUrl,
-        });
-      } else {
-        try {
-          // Lazy-require adapter to avoid optional dependency errors during builds
-          // eslint-disable-next-line @typescript-eslint/no-require-imports
-          const { Pool } = require("pg");
-          // eslint-disable-next-line @typescript-eslint/no-require-imports
-          const { PrismaPg } = require("@prisma/adapter-pg");
-          const pool = new Pool({ connectionString: databaseUrl });
-          const adapter = new PrismaPg(pool);
-          globalForPrisma.prisma = new PrismaClient({
-            log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-            adapter,
-          });
-        } catch (err) {
-          console.error("Failed to load Prisma driver adapter pg, falling back to direct PrismaClient", err);
-          globalForPrisma.prisma = new PrismaClient({
-            log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-          });
-        }
-      }
+      globalForPrisma.prisma = new PrismaClient({
+        log:
+          process.env.NODE_ENV === "development"
+            ? ["query", "error", "warn"]
+            : ["error"],
+      });
     }
 
     return Reflect.get(globalForPrisma.prisma, prop);
   },
 });
-
-
