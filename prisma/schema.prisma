@@ -118,17 +118,17 @@ model StockBatch {
 }
 
 model StockMovement {
-  id          String         @id @default(uuid())
+  id          String        @id @default(uuid())
   productId   String
-  product     Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product     Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   batchId     String?
-  batch       StockBatch?    @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  batch       StockBatch?   @relation(fields: [batchId], references: [id], onDelete: SetNull)
   qty         Float
   type        MovementType
   source      MovementSource
   description String?
   referenceId String?        // Sale ID or other reference
-  createdAt   DateTime       @default(now())
+  createdAt   DateTime      @default(now())
 
   @@map("stock_movements")
 }
