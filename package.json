@@ -2,9 +2,12 @@
   "name": "warung_venty",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "smoke": "npx tsc --noEmit --pretty false && npm run lint"
@@ -27,8 +30,8 @@
     "lucide-react": "^1.17.0",
     "next": "15.0.0",
     "pg": "^8.21.0",
-    "react": "19.0.0-rc-65a56d0e-20241020",
-    "react-dom": "19.0.0-rc-65a56d0e-20241020",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-hook-form": "^7.77.0",
     "recharts": "^3.8.1",
     "tailwind-merge": "^3.6.0",
@@ -37,8 +40,8 @@
   },
   "devDependencies": {
     "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "@types/recharts": "^1.8.29",
     "eslint": "^8",
     "eslint-config-next": "15.0.0",
