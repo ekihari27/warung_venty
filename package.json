@@ -13,8 +13,8 @@
     "smoke": "npx tsc --noEmit --pretty false && npm run lint"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^7.8.0",
+    "@prisma/client": "6.16.2",
+    "prisma": "6.16.2",
     "@radix-ui/react-dialog": "^1.1.16",
     "@radix-ui/react-slot": "^1.2.5",
     "@radix-ui/react-toast": "^1.2.16",
