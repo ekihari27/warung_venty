@@ -1,0 +1,206 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  KASIR
+}
+
+enum MovementType {
+  IN
+  OUT
+}
+
+enum MovementSource {
+  SALE
+  MANUAL
+  ADJUSTMENT
+}
+
+enum PaymentMethod {
+  CASH
+  QRIS
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String
+  name         String
+  role         Role       @default(KASIR)
+  active       Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  sales        Sale[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("categories")
+}
+
+model Product {
+  id            String          @id @default(uuid())
+  name          String
+  sku           String          @unique
+  barcode       String?         @unique
+  categoryId    String
+  category      Category        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  purchasePrice Float           @default(0.0) // Average or latest purchase price
+  sellingPrice  Float           @default(0.0)
+  unit          String          @default("pcs") // pcs, box, sachet, etc.
+  description   String?
+  image         String?         // Cloudinary URL
+  active        Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  stockBatches  StockBatch[]
+  movements     StockMovement[]
+  saleItems     SaleItem[]
+
+  @@map("products")
+}
+
+model Supplier {
+  id           String       @id @default(uuid())
+  name         String
+  address      String?
+  phone        String?
+  email        String?
+  stockBatches StockBatch[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@map("suppliers")
+}
+
+model StockBatch {
+  id            String          @id @default(uuid())
+  productId     String
+  product       Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  supplierId    String?
+  supplier      Supplier?       @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  initialQty    Float
+  remainingQty  Float
+  purchasePrice Float
+  receivedAt    DateTime        @default(now())
+  expiredAt     DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  movements     StockMovement[]
+  batchUsages   BatchUsage[]
+
+  @@index([productId, receivedAt])
+  @@map("stock_batches")
+}
+
+model StockMovement {
+  id          String         @id @default(uuid())
+  productId   String
+  product     Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  batchId     String?
+  batch       StockBatch?    @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  qty         Float
+  type        MovementType
+  source      MovementSource
+  description String?
+  referenceId String?        // Sale ID or other reference
+  createdAt   DateTime       @default(now())
+
+  @@map("stock_movements")
+}
+
+model Sale {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique
+  cashierId     String
+  cashier       User          @relation(fields: [cashierId], references: [id])
+  totalPrice    Float
+  tax           Float         @default(0.0)
+  finalPrice    Float
+  paidAmount    Float
+  changeAmount  Float         @default(0.0)
+  paymentMethod PaymentMethod @default(CASH)
+  paymentStatus PaymentStatus @default(PAID)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  items         SaleItem[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id            String       @id @default(uuid())
+  saleId        String
+  sale          Sale         @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product      @relation(fields: [productId], references: [id])
+  qty           Float
+  sellingPrice  Float
+  subtotal      Float
+  purchasePrice Float        // Store COGS at time of sale
+  batchUsages   BatchUsage[]
+
+  @@map("sale_items")
+}
+
+model BatchUsage {
+  id            String     @id @default(uuid())
+  saleItemId    String
+  saleItem      SaleItem   @relation(fields: [saleItemId], references: [id], onDelete: Cascade)
+  batchId       String
+  batch         StockBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  qty           Float
+  purchasePrice Float
+
+  @@map("batch_usages")
+}
+
+model Setting {
+  id            String   @id @default("default")
+  storeName     String   @default("WARUNG VENTY")
+  logo          String?  // Cloudinary URL
+  address       String?
+  phone         String?
+  qrisImage     String?  // Cloudinary URL for dynamic QRIS static view
+  receiptFooter String?  @default("Terima Kasih atas Kunjungan Anda!")
+  defaultTax    Float    @default(0.0) // Percentage, e.g., 0 for none, 11 for 11%
+  updatedAt     DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName  String
+  action    String
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
